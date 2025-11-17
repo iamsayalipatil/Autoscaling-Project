@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Autoscaling.md</title>
+<meta http-equiv="Content-type" content="text/html;charset=UTF-8">
+
+<style>
+/* https://github.com/microsoft/vscode/blob/master/extensions/markdown-language-features/media/markdown.css */
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+body {
+	font-family: var(--vscode-markdown-font-family, -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif);
+	font-size: var(--vscode-markdown-font-size, 14px);
+	padding: 0 26px;
+	line-height: var(--vscode-markdown-line-height, 22px);
+	word-wrap: break-word;
+}
+
+#code-csp-warning {
+	position: fixed;
+	top: 0;
+	right: 0;
+	color: white;
+	margin: 16px;
+	text-align: center;
+	font-size: 12px;
+	font-family: sans-serif;
+	background-color:#444444;
+	cursor: pointer;
+	padding: 6px;
+	box-shadow: 1px 1px 1px rgba(0,0,0,.25);
+}
+
+#code-csp-warning:hover {
+	text-decoration: none;
+	background-color:#007acc;
+	box-shadow: 2px 2px 2px rgba(0,0,0,.25);
+}
+
+body.scrollBeyondLastLine {
+	margin-bottom: calc(100vh - 22px);
+}
+
+body.showEditorSelection .code-line {
+	position: relative;
+}
+
+body.showEditorSelection .code-active-line:before,
+body.showEditorSelection .code-line:hover:before {
+	content: "";
+	display: block;
+	position: absolute;
+	top: 0;
+	left: -12px;
+	height: 100%;
+}
+
+body.showEditorSelection li.code-active-line:before,
+body.showEditorSelection li.code-line:hover:before {
+	left: -30px;
+}
+
+.vscode-light.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.15);
+}
+
+.vscode-light.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.40);
+}
+
+.vscode-light.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-dark.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.4);
+}
+
+.vscode-dark.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.60);
+}
+
+.vscode-dark.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-high-contrast.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 160, 0, 0.7);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 160, 0, 1);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+img {
+	max-width: 100%;
+	max-height: 100%;
+}
+
+a {
+	text-decoration: none;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+
+a:focus,
+input:focus,
+select:focus,
+textarea:focus {
+	outline: 1px solid -webkit-focus-ring-color;
+	outline-offset: -1px;
+}
+
+hr {
+	border: 0;
+	height: 2px;
+	border-bottom: 2px solid;
+}
+
+h1 {
+	padding-bottom: 0.3em;
+	line-height: 1.2;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+}
+
+h1, h2, h3 {
+	font-weight: normal;
+}
+
+table {
+	border-collapse: collapse;
+}
+
+table > thead > tr > th {
+	text-align: left;
+	border-bottom: 1px solid;
+}
+
+table > thead > tr > th,
+table > thead > tr > td,
+table > tbody > tr > th,
+table > tbody > tr > td {
+	padding: 5px 10px;
+}
+
+table > tbody > tr + tr > td {
+	border-top: 1px solid;
+}
+
+blockquote {
+	margin: 0 7px 0 5px;
+	padding: 0 16px 0 10px;
+	border-left-width: 5px;
+	border-left-style: solid;
+}
+
+code {
+	font-family: Menlo, Monaco, Consolas, "Droid Sans Mono", "Courier New", monospace, "Droid Sans Fallback";
+	font-size: 1em;
+	line-height: 1.357em;
+}
+
+body.wordWrap pre {
+	white-space: pre-wrap;
+}
+
+pre:not(.hljs),
+pre.hljs code > div {
+	padding: 16px;
+	border-radius: 3px;
+	overflow: auto;
+}
+
+pre code {
+	color: var(--vscode-editor-foreground);
+	tab-size: 4;
+}
+
+/** Theming */
+
+.vscode-light pre {
+	background-color: rgba(220, 220, 220, 0.4);
+}
+
+.vscode-dark pre {
+	background-color: rgba(10, 10, 10, 0.4);
+}
+
+.vscode-high-contrast pre {
+	background-color: rgb(0, 0, 0);
+}
+
+.vscode-high-contrast h1 {
+	border-color: rgb(0, 0, 0);
+}
+
+.vscode-light table > thead > tr > th {
+	border-color: rgba(0, 0, 0, 0.69);
+}
+
+.vscode-dark table > thead > tr > th {
+	border-color: rgba(255, 255, 255, 0.69);
+}
+
+.vscode-light h1,
+.vscode-light hr,
+.vscode-light table > tbody > tr + tr > td {
+	border-color: rgba(0, 0, 0, 0.18);
+}
+
+.vscode-dark h1,
+.vscode-dark hr,
+.vscode-dark table > tbody > tr + tr > td {
+	border-color: rgba(255, 255, 255, 0.18);
+}
+
+</style>
+
+<style>
+/* Tomorrow Theme */
+/* http://jmblog.github.com/color-themes-for-google-code-highlightjs */
+/* Original theme - https://github.com/chriskempson/tomorrow-theme */
+
+/* Tomorrow Comment */
+.hljs-comment,
+.hljs-quote {
+	color: #8e908c;
+}
+
+/* Tomorrow Red */
+.hljs-variable,
+.hljs-template-variable,
+.hljs-tag,
+.hljs-name,
+.hljs-selector-id,
+.hljs-selector-class,
+.hljs-regexp,
+.hljs-deletion {
+	color: #c82829;
+}
+
+/* Tomorrow Orange */
+.hljs-number,
+.hljs-built_in,
+.hljs-builtin-name,
+.hljs-literal,
+.hljs-type,
+.hljs-params,
+.hljs-meta,
+.hljs-link {
+	color: #f5871f;
+}
+
+/* Tomorrow Yellow */
+.hljs-attribute {
+	color: #eab700;
+}
+
+/* Tomorrow Green */
+.hljs-string,
+.hljs-symbol,
+.hljs-bullet,
+.hljs-addition {
+	color: #718c00;
+}
+
+/* Tomorrow Blue */
+.hljs-title,
+.hljs-section {
+	color: #4271ae;
+}
+
+/* Tomorrow Purple */
+.hljs-keyword,
+.hljs-selector-tag {
+	color: #8959a8;
+}
+
+.hljs {
+	display: block;
+	overflow-x: auto;
+	color: #4d4d4c;
+	padding: 0.5em;
+}
+
+.hljs-emphasis {
+	font-style: italic;
+}
+
+.hljs-strong {
+	font-weight: bold;
+}
+</style>
+
+<style>
+/*
+ * Markdown PDF CSS
+ */
+
+ body {
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif, "Meiryo";
+	padding: 0 12px;
+}
+
+pre {
+	background-color: #f8f8f8;
+	border: 1px solid #cccccc;
+	border-radius: 3px;
+	overflow-x: auto;
+	white-space: pre-wrap;
+	overflow-wrap: break-word;
+}
+
+pre:not(.hljs) {
+	padding: 23px;
+	line-height: 19px;
+}
+
+blockquote {
+	background: rgba(127, 127, 127, 0.1);
+	border-color: rgba(0, 122, 204, 0.5);
+}
+
+.emoji {
+	height: 1.4em;
+}
+
+code {
+	font-size: 14px;
+	line-height: 19px;
+}
+
+/* for inline code */
+:not(pre):not(.hljs) > code {
+	color: #C9AE75; /* Change the old color so it seems less like an error */
+	font-size: inherit;
+}
+
+/* Page Break : use <div class="page"/> to insert page break
+-------------------------------------------------------- */
+.page {
+	page-break-after: always;
+}
+
+</style>
+
+<script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: document.body.classList.contains('vscode-dark') || document.body.classList.contains('vscode-high-contrast')
+          ? 'dark'
+          : 'default'
+    });
+  </script>
+<h1 id="implementing-autoscalling-group-with-load-balancer">Implementing Autoscalling Group with Load Balancer</h1>
+<h2 id="introduction">Introduction</h2>
+<p>In this project, I designed and implemented an Application Load Balancer (ALB) in conjunction with Auto Scaling Groups (ASGs) to efficiently manage traffic distribution and the dynamic scaling of EC2 instances.</p>
+<p>The architecture ensures high availability, fault tolerance, and scalability by routing incoming requests across multiple instances and automatically adjusting the number of instances based on real-time demand.</p>
+<p>I configured three distinct Auto Scaling Groups to demonstrate different scaling strategies:</p>
+<ol>
+<li>
+<p>Home – a static scaling group with a fixed number of instances,</p>
+</li>
+<li>
+<p>Laptop – a dynamic scaling group that reacts to usage metrics (e.g., CPU utilization) to scale in or out automatically.</p>
+</li>
+<li>
+<p>Mobile – a scheduled scaling group that adjusts capacity based on predefined time-based schedules.</p>
+</li>
+</ol>
+<p>Each Auto Scaling Group is linked to its own Target Group, and all Target Groups are registered with the Application Load Balancer, enabling seamless request routing across the infrastructure.</p>
+<h2 id="deployment-architecture">Deployment Architecture</h2>
+<p><img src="Images/draw.io.jpeg" alt="Instance"></p>
+<h2 id="system-essentials">System Essentials</h2>
+<ol>
+<li>Application Load Balancer (ALB)</li>
+</ol>
+<ul>
+<li>
+<p>Acts as the entry point for incoming traffic and intelligently distributes requests across multiple target groups.</p>
+</li>
+<li>
+<p>Enhances fault tolerance and ensures high availability by balancing the load among healthy instances.</p>
+</li>
+</ul>
+<ol start="2">
+<li>Auto Scaling Groups (ASGs)</li>
+</ol>
+<ul>
+<li>
+<p>To showcase various scaling techniques, I configured three distinct Auto Scaling Groups:</p>
+<ul>
+<li>
+<p>Home (Static Scaling): Maintains a fixed number of EC2 instances at all times.</p>
+</li>
+<li>
+<p>Laptop (Dynamic Scaling): Automatically scales the number of instances up or down in response to real-time CPU utilization metrics.</p>
+</li>
+<li>
+<p>Mobile (Scheduled Scaling): Adjusts the number of instances based on a predefined schedule (e.g., scaling out during peak traffic hours and scaling in during off-peak times).</p>
+</li>
+</ul>
+</li>
+</ul>
+<ol start="3">
+<li>Target Groups</li>
+</ol>
+<ul>
+<li>
+<p>Each ASG is linked to a dedicated target group.</p>
+</li>
+<li>
+<p>These target groups are integrated with the Application Load Balancer, enabling efficient routing of incoming requests to the appropriate set of instances.</p>
+</li>
+</ul>
+<h2 id="steps-to-setup">Steps to Setup</h2>
+<h3 id="step-1-launch-template">Step 1: Launch Template</h3>
+<ul>
+<li>
+<p>Create 3 Launch Templates: home,laptop and mobile (each with unique User Data scripts)</p>
+</li>
+<li>
+<p>In an EC2 Instance, Navigate to the Launch Templates section in your AWS Management Console.</p>
+</li>
+</ul>
+<p><img src="Images/1.1.png" alt="Instance"></p>
+<ul>
+<li>
+<p>Click on &quot;Create Launch Template&quot; to begin.</p>
+</li>
+<li>
+<p>Enter a Template Name (e.g., home, laptop, mobile)</p>
+</li>
+<li>
+<p>Write Disription in it.</p>
+</li>
+</ul>
+<p><img src="Images/1.2.png" alt="Instance"></p>
+<ul>
+<li>Select an AMI from the Quick Start options (I selected Amazon Linux).
+Alternatively, you can use a custom AMI if you’ve previously created one.</li>
+</ul>
+<p><img src="Images/1.3.png" alt="Instance"></p>
+<ul>
+<li>Select a Instance type and Key Pair</li>
+</ul>
+<p><img src="Images/1.4.png" alt="Instance"></p>
+<ul>
+<li>Configure the Network Settings:
+Since this is a basic application, only port 80 (HTTP) and port 22 (SSH) are required.
+You can either create a new security group with these rules or select an existing security group that already allows this traffic.</li>
+</ul>
+<p><img src="Images/1.5.png" alt="Instance"></p>
+<ul>
+<li>Add user datascript in advanced options (you don't need to add this script if u hae selected your own AMI)</li>
+</ul>
+<p><img src="Images/1.6.png" alt="Instance"></p>
+<ul>
+<li>
+<p>Click on Launch Template</p>
+</li>
+<li>
+<p>Similarly, Create other templates for Mobile and Laptop</p>
+</li>
+</ul>
+<p>User datascript for mobile-</p>
+<pre><code>  #!/bin/bash   
+  sudo yum update -y  
+  sudo yum install -y httpd  
+  sudo systemctl start httpd  
+  sudo systemctl enable httpd
+
+  sudo mkdir /var/www/html/mobile
+  echo &quot;&lt;h1&gt;This is the mobile page $(hostname -f)&lt;/h1&gt;&quot; &gt;
+  /var/www/html/mobile/index.html
+</code></pre>
+<p>User datascript for laptop-</p>
+<pre><code>  #!/bin/bash   
+  sudo yum update -y  
+  sudo yum install -y httpd  
+  sudo systemctl start httpd  
+  sudo systemctl enable httpd
+
+  sudo mkdir /var/www/html/laptop
+  echo &quot;&lt;h1&gt;This is the laptop page $(hostname -f)&lt;/h1&gt;&quot; &gt;
+  /var/www/html/laptop/index.html
+</code></pre>
+<p><img src="Images/1.7.png" alt="Instance"></p>
+<p><img src="Images/1.8.png" alt="Instance"></p>
+<ul>
+<li>Sucessfully, we created a Launch Template</li>
+</ul>
+<p><img src="Images/1.9.png" alt="Instance"></p>
+<h3 id="step-2-creating-autoscalling-group-asg">Step 2: Creating AutoScalling Group (ASG)</h3>
+<p>Let’s begin by creating the Auto Scaling Group for home, which uses static Scaling.</p>
+<ol>
+<li>
+<p>Navigate to the Auto Scaling Groups section in the AWS Management Console.</p>
+</li>
+<li>
+<p>Click on “Create Auto Scaling Group” to get started.</p>
+</li>
+</ol>
+<p><img src="Images/2.1.png" alt="Instance"></p>
+<ol start="3">
+<li>You’ll notice there are 7 setup steps listed on the left-hand side of the screen to guide you through the configuration process.</li>
+</ol>
+<p>#Choose Launch Template</p>
+<ul>
+<li>Give Name to autoscalling group.</li>
+</ul>
+<p><img src="Images/2.2.png" alt="Instance"></p>
+<ul>
+<li>
+<p>Select a Launch Template of home for home autoscalling group.</p>
+</li>
+<li>
+<p>click on next &amp; go to next step.</p>
+</li>
+</ul>
+<p><img src="Images/2.3.png" alt="Instance"></p>
+<p>#Choose instance launch option</p>
+<ul>
+<li>Select Availability Zone. (Atleast 2)</li>
+<li>go to next step.</li>
+</ul>
+<p><img src="Images/2.4.png" alt="Instance"></p>
+<p><img src="Images/2.5.png" alt="Instance"></p>
+<p>#Integrate with other services</p>
+<ul>
+<li>We’ll integrate these Auto Scaling Groups with the Load Balancer after all three have been created.
+For now, let’s proceed to the next step.</li>
+</ul>
+<p><img src="Images/2.6.png" alt="Instance"></p>
+<p><img src="Images/2.7.png" alt="Instance"></p>
+<p>#Configure Group size and scalling</p>
+<ul>
+<li>
+<p>For Home (static) ASG select : Desired = 2 , min = 2 , max = 2.</p>
+</li>
+<li>
+<p>Here for mobile we are giving : Desired = 3 , min = 2 , max = 7. (After creating mobile ASG we will make it sceduled)</p>
+</li>
+<li>
+<p>For Laptop (Dynamic) ASG select : Desired = 3 , min = 2 , max = 7.</p>
+</li>
+</ul>
+<p><img src="Images/2.8.png" alt="Instance"></p>
+<ul>
+<li>select target tracking scaling policy
+( if your ASG is static you don't need policy so select No scaling policy)</li>
+</ul>
+<p><img src="Images/2.9.png" alt="Instance"></p>
+<ul>
+<li>Go to the next</li>
+</ul>
+<p><img src="Images/2.10.png" alt="Instance"></p>
+<p>#Add notification</p>
+<p>#Add tags</p>
+<p>(you dont have to do anything in step 5 and 6 so just click on next)</p>
+<p><img src="Images/2.11.png" alt="Instance"></p>
+<p><img src="Images/2.12.png" alt="Instance"></p>
+<p>#Review</p>
+<ul>
+<li>select create autoscaling group</li>
+</ul>
+<p><img src="Images/2.13.png" alt="Instance"></p>
+<p><img src="Images/2.14.png" alt="Instance"></p>
+<ul>
+<li>
+<p>Similarly create other 2 ASG according to their type dynamic and scheduling. Just need to change the group size as i mentioned.</p>
+</li>
+<li>
+<p>Only select target tracking scaling policy
+( if your ASG is dynamic or scheduled you need policy so select target tracking scaling policy)</p>
+</li>
+<li>
+<p>Just need to change the group size as i mentioned.</p>
+<ul>
+<li>
+<p>Here, for mobile we are giving : Desired = 3 , min = 2 , max = 7. (After creating mobile ASG we will make it sceduled)</p>
+</li>
+<li>
+<p>For Laptop (Dynamic) ASG select : Desired = 3 , min = 2 , max = 7.</p>
+</li>
+</ul>
+</li>
+</ul>
+<p><img src="Images/2.15.png" alt="Instance"></p>
+<h3 id="step-3-now-to-make-mobile-asg-sceduled-follow-following-steps">Step 3: Now to make Mobile ASG Sceduled follow following steps</h3>
+<ul>
+<li>Click on Mobile ASG and select Automatic scaling (You will see the following interface)</li>
+</ul>
+<p><img src="Images/3.1.png" alt="Instance"></p>
+<p><img src="Images/3.2.png" alt="Instance"></p>
+<ul>
+<li>
+<p>Scroll down to bottom.</p>
+</li>
+<li>
+<p>Click on Create schedule action.</p>
+</li>
+</ul>
+<p><img src="Images/3.3.png" alt="Instance"></p>
+<ul>
+<li>
+<p>Give name to your schedule.</p>
+</li>
+<li>
+<p>Enter Desired , min and max values of instances.</p>
+</li>
+<li>
+<p>Choose Cron option in recurrence and give specific time in side box ( sequence is - minute hour date month and day of week)</p>
+</li>
+<li>
+<p>Enter the ending time with date</p>
+</li>
+<li>
+<p>Click on Create</p>
+</li>
+</ul>
+<p><img src="Images/3.4.png" alt="Instance"></p>
+<p><img src="Images/3.5.png" alt="Instance"></p>
+<ul>
+<li>If you click on the Mobile Auto Scaling Group and scroll down to the Scheduled Actions section, you’ll see the scheduled action that has been created.</li>
+</ul>
+<h3 id="step-4-creating-target-group-for-each-autoscalling-group">Step 4: Creating Target Group For each Autoscalling Group</h3>
+<ul>
+<li>
+<p>Go to Target Groups</p>
+</li>
+<li>
+<p>Click on Create Target Group</p>
+</li>
+</ul>
+<p><img src="Images/4.1.png" alt="Instance"></p>
+<ul>
+<li>Give a Name to your Target Group.</li>
+</ul>
+<p><img src="Images/4.2.png" alt="Instance"></p>
+<ul>
+<li>
+<p>Scroll down and go to health check section.</p>
+</li>
+<li>
+<p>Give a path of your application in Health Check Path section.
+[Note :For home, i Gave &quot;/&quot; as a path . Here &quot;/ &quot; represten the directry &quot; /var/www/html/ &quot; which is defualt directery of httpd]</p>
+</li>
+<li>
+<p>click on next</p>
+</li>
+</ul>
+<p><img src="Images/4.3.png" alt="Instance"></p>
+<ul>
+<li>Click on Create Traget Group (don't need to change anything else)</li>
+</ul>
+<p><img src="Images/4.4.png" alt="Instance"></p>
+<ul>
+<li>
+<p>Similarly Create Target Groups for Laptop and Mobile.</p>
+</li>
+<li>
+<p>You only need to change the path in Health check section as given below.</p>
+</li>
+</ul>
+<p>For Laptop :</p>
+<p><img src="Images/4.5.png" alt="Instance"></p>
+<p><img src="Images/4.6.png" alt="Instance"></p>
+<p>For Mobile :</p>
+<p><img src="Images/4.7.png" alt="Instance"></p>
+<p><img src="Images/4.8.png" alt="Instance"></p>
+<ul>
+<li>Now, three Target Groups are created</li>
+</ul>
+<p><img src="Images/4.9.png" alt="Instance"></p>
+<h3 id="step-5-connecting-autoscalling-group-to-target-groups">Step 5: Connecting Autoscalling group to Target Groups</h3>
+<ul>
+<li>Select an Autoscalling Group .</li>
+<li>Click on Action at top right corner.</li>
+<li>Click on Edit</li>
+</ul>
+<p><img src="Images/5.1.png" alt="Instance"></p>
+* Scroll down and you will see the Load balancing section.
+<ul>
+<li>
+<p>Click on Application load balancer</p>
+</li>
+<li>
+<p>Select a Target group for autoscalling group we selected.
+(for laptop ASG select Laptop target group, for mobile ASG select Mobile Target group and for home ASG select home target group.)</p>
+</li>
+</ul>
+<p><img src="Images/5.2.png" alt="Instance"></p>
+<ul>
+<li>click on update.</li>
+</ul>
+<p><img src="Images/5.3.png" alt="Instance"></p>
+<ul>
+<li>
+<p>Successfully connected the Autoscalling group and target groups.</p>
+</li>
+<li>
+<p>Repeat process to connect each autoscalling group to its target group.</p>
+</li>
+</ul>
+<h3 id="step-6-setting-up-an-application-load-balancer-and-linking-it-to-target-groups">Step 6: Setting up an Application Load Balancer and linking it to target groups.</h3>
+<ul>
+<li>Go to Load Balancers and Click on Create Load Balancer</li>
+</ul>
+<p><img src="Images/6.1.png" alt="Instance"></p>
+<ul>
+<li>Select Application Load Balancer &amp; Click on Create</li>
+</ul>
+<p><img src="Images/6.2.png" alt="Instance"></p>
+<ul>
+<li>Give Load balancer name Like ALB</li>
+</ul>
+<p><img src="Images/6.3.png" alt="Instance"></p>
+<ul>
+<li>Select all AZ
+(choose AZ same as the AZ we selected while creating autoscalling group.)</li>
+</ul>
+<p><img src="Images/6.4.png" alt="Instance"></p>
+<ul>
+<li>select a existing security group.
+(Select same security group we selected while creating autoscalling group)</li>
+</ul>
+<p><img src="Images/6.5.png" alt="Instance"></p>
+<ul>
+<li>
+<p>In Listners and Routing section,</p>
+<ul>
+<li>
+<p>Select forward to target group</p>
+</li>
+<li>
+<p>Choose a default target group. (Here default target group is home-TG)</p>
+</li>
+</ul>
+</li>
+</ul>
+<p><img src="Images/6.6.png" alt="Instance"></p>
+<ul>
+<li>Click on Create Load Balancer</li>
+</ul>
+<p><img src="Images/6.7.png" alt="Instance"></p>   
+<ul>
+<li>
+<p>Successfully created Application loadbalancer</p>
+</li>
+<li>
+<p>If you scroll down , you will see the HomeTG as defualt target group in Listners and Rules section.</p>
+</li>
+<li>
+<p>To add other Target groups..</p>
+<pre><code>* Select HTTP80 i.e., home-TG
+
+* Click on Manage Rules
+
+* Click on Add Rule
+</code></pre>
+</li>
+</ul>
+<p><img src="Images/6.8.png" alt="Instance"></p>   
+<ul>
+<li>Give name to the rule and click on add condition and select path.</li>
+</ul>
+<p><img src="Images/6.9.png" alt="Instance"></p>  
+<ul>
+<li>Give path for mobile application</li>
+</ul>
+<p><img src="Images/6.10.png" alt="Instance"></p>  
+<ul>
+<li>
+<p>In Actions section</p>
+<ul>
+<li>
+<p>select forward to target group</p>
+</li>
+<li>
+<p>select the target group i.e., mobile-TG</p>
+</li>
+<li>
+<p>Go to next step.</p>
+</li>
+</ul>
+</li>
+</ul>
+<p><img src="Images/6.11.png" alt="Instance"></p> 
+<ul>
+<li>
+<p>In Listners rule , give priority 1 for mobileTG</p>
+</li>
+<li>
+<p>Click on next</p>
+</li>
+</ul>
+<p><img src="Images/6.12.png" alt="Instance"></p> 
+<ul>
+<li>Click on add rule</li>
+</ul>
+<p><img src="Images/6.13.png" alt="Instance"></p>
+<ul>
+<li>
+<p>Successfully connected Mobile Target Group to Loadbalancer</p>
+</li>
+<li>
+<p>Similarly connect Laptop target group to load balancer with priority 2</p>
+</li>
+</ul>
+<p><img src="Images/6.14.png" alt="Instance"></p>
+<p><img src="Images/6.15.png" alt="Instance"></p>
+<p><img src="Images/6.16.png" alt="Instance"></p>
+<ul>
+<li>You can now see that the active instances have been automatically created in the instance dashboard</li>
+</ul>
+<p><img src="Images/7.png.png" alt="Instance"></p>
+<ul>
+<li>
+<p>To verify if it's functioning correctly:</p>
+<ul>
+<li>
+<p>Navigate to the Load Balancers section.</p>
+</li>
+<li>
+<p>Select the load balancer you just created.</p>
+</li>
+<li>
+<p>Scroll down to find and copy the DNS name.</p>
+</li>
+<li>
+<p>Paste the DNS name into your web browser’s address bar and press Enter</p>
+</li>
+</ul>
+</li>
+</ul>
+<p><img src="Images/DNS Copy.png" alt="Instance"></p>
+<h3 id="step-7-result">Step 7: Result</h3>
+<ul>
+<li>ALB DNS successfully routed traffic to all three target groups.</li>
+</ul>
+<p>Output of home:</p>
+<p><img src="Images/home op 1.png" alt="Instance"></p>
+<p><img src="Images/home op 2.png" alt="Instance"></p>
+<p>Output of laptop:</p>
+<p><img src="Images/laptop op 1.png" alt="Instance"></p>
+<p><img src="Images/laptop op 2.png" alt="Instance"></p>
+Output of mobile:
+<p><img src="Images/mobile op 1.png" alt="Instance"></p>
+<p><img src="Images/mobile op 2.png" alt="Instance"></p>
+<h2 id="technologies-used-simplified">Technologies Used (Simplified)</h2>
+<ol>
+<li>
+<p>Amazon EC2 – Virtual machines used to run the application.</p>
+</li>
+<li>
+<p>Application Load Balancer (ALB) – Distributes incoming traffic to different servers.</p>
+</li>
+<li>
+<p>Launch Templates – Predefined settings used to quickly launch EC2 instances.</p>
+</li>
+<li>
+<p>Auto Scaling Groups (ASG) – Automatically adds or removes instances based on demand (supports fixed, automatic, or scheduled scaling).</p>
+</li>
+<li>
+<p>Target Groups – Directs traffic to the correct group of servers.</p>
+</li>
+<li>
+<p>Amazon Linux – The operating system installed on the EC2 instances.</p>
+</li>
+<li>
+<p>Security Groups – Act like a firewall to control incoming and outgoing traffic to the servers.</p>
+</li>
+</ol>
+<h2 id="conclusion">Conclusion</h2>
+<p>This project showcases how integrating an Application Load Balancer (ALB) with multiple Auto Scaling Groups (ASGs) can effectively deliver high availability, fault tolerance, and scalability within the AWS environment.</p>
+<p>By working with Static, Scheduled, and Dynamic scaling methods, I gained practical experience in configuring and managing various scaling techniques. The setup efficiently distributed incoming traffic across target groups, automatically adjusted the number of instances based on demand, and served application requests through a unified DNS endpoint.</p>
+<p>In summary, this project strengthened my understanding of AWS load balancing, automated scaling, and cloud infrastructure management.</p>
+
+</body>
+</html>
